@@ -40,6 +40,10 @@
         el-main
           //- router-view
           el-scrollbar
+            //- <div id="editor">
+            //-   <textarea :value="input" @input="update"></textarea>
+            //-   <div v-html="compiledMarkdown"></div>
+            //- </div>
             .todo-wrap
               .cards-wrap
                 el-card.box-card(v-for="(card, index) in todoCards", :key="index")
@@ -66,13 +70,15 @@
                         el-input.input-new-tag(v-if="inputVisible", v-model="inputValue", ref="saveTagInput", size="mini", @keyup.enter.native="handleInputConfirm", @blur="handleInputConfirm")
                         el-button.button-new-tag(v-else, size="small" @click="showInput") + New Tag
                   .box-card__content
-                    .content(v-html="card.content")
+                    .content(v-html="compiledMarkdown(card.content)")
           el-dialog(title='新增 Todo', :visible.sync='dialogFormVisible')
             el-form
               el-form-item(label='title')
                 el-input(v-model='addTodoForm.title', auto-complete='off')
               el-form-item(label='content')
                 el-input(type='textarea', :rows='4', v-model='addTodoForm.content')
+                small Markdown 格式：
+                 a(target="_blankh", href="https://wastemobile.gitbooks.io/gitbook-chinese/content/format/markdown.html") 編輯說明
             span.dialog-footer(slot='footer')
               el-button(@click='dialogFormVisible = false') 取消
               el-button(type='primary', @click='pushNewTodo') 建立
@@ -82,18 +88,23 @@
                 el-input(v-model='thisTodoForm.title', auto-complete='off')
               el-form-item(label='content')
                 el-input(type='textarea', :rows='4', v-model='thisTodoForm.content')
+                small Markdown 格式：
+                 a(target="_blankh", href="https://wastemobile.gitbooks.io/gitbook-chinese/content/format/markdown.html") 編輯說明
             span.dialog-footer(slot='footer')
               el-button(@click='editFormVisible = false') 取消
-              el-button(type='primary', @click='updateTodo(thisTodoForm.index)') 建立
+              el-button(type='primary', @click='updateTodo(thisTodoForm.index)') 更新
 </template>
 
 <script>
 import dateFns from 'date-fns'
+import _ from 'lodash'
+import marked from 'marked'
 
 export default {
   name: 'App',
   data () {
     return {
+      input: '# hello',
       test: '',
       testArray: [],
       currentDate: dateFns.format(new Date(), 'YYYY/MM/DD mm:ss'),
@@ -115,7 +126,7 @@ export default {
       todoCards: [
         {
           title: '如何新增新的Todo',
-          content: '<p><h3>點選左上方新增按鈕</h3><p>藍色的，有個加號的</p></p>',
+          content: '### 點選左上方 \n - 新增按鈕藍色 \n - 填寫標題 \n 填寫內容',
           status: false,
           tags: [
             {
@@ -134,7 +145,7 @@ export default {
         },
         {
           title: '我是 Phantas',
-          content: '<p><h3>Vue</h3><p>有趣</p></p>',
+          content: '我用 Vue  \n Vue *是很有趣的* framework  \n 設計師都能學會',
           status: true,
           tags: [
             {
@@ -157,7 +168,7 @@ export default {
         },
         {
           title: '很高興',
-          content: '<p><h3>能夠認識</h3><p>您</p></p>',
+          content: '能夠認識您',
           status: true,
           tags: [
             {
@@ -173,64 +184,7 @@ export default {
               type: 'primary'
             }
           ]
-        },
-        {
-          title: '很高興',
-          content: '<p><h3>能夠認識</h3><p>您</p></p>',
-          status: true,
-          tags: [
-            {
-              text: '咦',
-              type: 'success'
-            },
-            {
-              text: 'Danger',
-              type: 'danger'
-            },
-            {
-              text: 'Primary',
-              type: 'primary'
-            }
-          ]
-        },
-        {
-          title: '很高興',
-          content: '<p><h3>能夠認識</h3><p>您</p></p>',
-          status: false,
-          tags: [
-            {
-              text: '咦',
-              type: 'success'
-            },
-            {
-              text: 'Danger',
-              type: 'danger'
-            },
-            {
-              text: 'Primary',
-              type: 'primary'
-            }
-          ]
-        },
-        {
-          title: '很高興',
-          content: '<p><h3>能夠認識</h3><p>您</p></p>',
-          status: false,
-          tags: [
-            {
-              text: '咦',
-              type: 'success'
-            },
-            {
-              text: 'Danger',
-              type: 'danger'
-            },
-            {
-              text: 'Primary',
-              type: 'primary'
-            }
-          ]
-        },
+        }
       ]
     }
   },
@@ -243,16 +197,37 @@ export default {
       todo.title = this.thisTodoForm.title
       todo.content = this.thisTodoForm.content
       this.editFormVisible = false
+      const h = this.$createElement
+      this.$notify({
+        title: '更新卡片',
+        message: h('i', { style: 'color: #409EFF' }, todo.title + ' - 已更新'),
+        type: 'success'
+      })
     },
     pushNewTodo () {
-      this.dialogFormVisible = false
-      this.todoCards.push({
-        title: this.addTodoForm.title,
-        content: this.addTodoForm.content
-      })
-      console.log(this.todoCards)
-      this.addTodoForm.title = ''
-      this.addTodoForm.content = ''
+      if (this.addTodoForm.title !== '') {
+        this.dialogFormVisible = false
+        this.todoCards.push({
+          title: this.addTodoForm.title,
+          content: this.addTodoForm.content
+        })
+        // console.log(this.todoCards)
+        const h = this.$createElement
+        this.$notify({
+          title: '新增卡片',
+          message: h('i', { style: 'color: #409EFF' }, this.addTodoForm.title + ' - 已新增'),
+          type: 'success'
+        })
+        this.addTodoForm.title = ''
+        this.addTodoForm.content = ''
+      } else {
+        const h = this.$createElement
+        this.$notify({
+          title: '請填入標題',
+          message: h('i', { style: 'color: #F56C6C' }, '標題為必填欄位'),
+          type: 'error'
+        })
+      }
     },
     deleteCard (index) {
       console.log(index)
@@ -290,7 +265,15 @@ export default {
       }
       this.inputVisible = false
       this.inputValue = ''
+    },
+    update: _.debounce(function (e) {
+      this.input = e.target.value
+    }, 300),
+    compiledMarkdown: function (content) {
+      return marked(content, { sanitize: true })
     }
+  },
+  computed: {
   }
 }
 </script>
