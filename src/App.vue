@@ -66,9 +66,9 @@
                             i.el-icon-delete
                     el-row(type="flex", justify="space-between")
                       el-col.box-card__tag
-                        el-tag(v-for="(tag, index) in card.tags", :key="index", size="medium", :type="tag.type", closable, :disable-transitions="false", @close="handleClose(tag)") {{ tag.text }}
-                        el-input.input-new-tag(v-if="inputVisible", v-model="inputValue", ref="saveTagInput", size="mini", @keyup.enter.native="handleInputConfirm", @blur="handleInputConfirm")
-                        el-button.button-new-tag(v-else, size="small" @click="showInput") + New Tag
+                        el-tag(v-for="(tag, index) in card.tags", :key="index", size="medium", :type="tag.type", closable, :disable-transitions="false", @close="handleClose(tag, card.tags)") {{ tag.text }}
+                        el-input.input-new-tag(v-if="card.tagsInputVisible", v-model="inputValue", :ref="'saveTagInput' + index", size="mini", @keyup.enter.native="handleInputConfirm(card.tags, card)", @blur="handleInputConfirm(card.tags, card)")
+                        el-button.button-new-tag(v-else, size="small" @click="showInput(card, index)") + New Tag
                   .box-card__content
                     .content(v-html="compiledMarkdown(card.content)")
           el-dialog(title='新增 Todo', :visible.sync='dialogFormVisible')
@@ -128,6 +128,7 @@ export default {
           title: '如何新增新的Todo',
           content: '### 點選左上方 \n - 新增按鈕藍色 \n - 填寫標題 \n 填寫內容',
           status: false,
+          tagsInputVisible: false,
           tags: [
             {
               text: '生活',
@@ -147,6 +148,7 @@ export default {
           title: '我是 Phantas',
           content: '我用 Vue  \n Vue *是很有趣的* framework  \n 設計師都能學會',
           status: true,
+          tagsInputVisible: false,
           tags: [
             {
               text: 'Phantas',
@@ -170,6 +172,7 @@ export default {
           title: '很高興',
           content: '能夠認識您',
           status: true,
+          tagsInputVisible: false,
           tags: [
             {
               text: '咦',
@@ -228,7 +231,7 @@ export default {
       }
     },
     deleteCard (index) {
-      console.log(index)
+      // console.log(index)
       this.todoCards.splice(index, 1)
     },
     editCard (index) {
@@ -245,23 +248,27 @@ export default {
         dateFns.format(cardDate, 'YYYY/MM/DD mm:ss')
       }
     },
-    handleClose (tag) {
-      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
+    handleClose (tag, tags) {
+      tags.splice(tags.indexOf(tag), 1)
     },
 
-    showInput () {
-      this.inputVisible = true
+    showInput (card, index) {
+      card.tagsInputVisible = true
       this.$nextTick(_ => {
-        this.$refs.saveTagInput.$refs.input.focus()
+        // console.log(this.$refs['saveTagInput' + index][0].$refs)
+        this.$refs['saveTagInput' + index][0].$refs.input.focus()
       })
     },
-
-    handleInputConfirm () {
+    handleInputConfirm (tags, card) {
+      // console.log(card)
       let inputValue = this.inputValue
       if (inputValue) {
-        this.dynamicTags.push(inputValue)
+        tags.push({
+          text: inputValue,
+          type: 'info'
+        })
       }
-      this.inputVisible = false
+      card.tagsInputVisible = false
       this.inputValue = ''
     },
     update: _.debounce(function (e) {
