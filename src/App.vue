@@ -221,10 +221,8 @@ export default {
         this.addTodoForm.title = ''
         this.addTodoForm.content = ''
       } else {
-        const h = this.$createElement
-        this.$notify({
-          title: '請填入標題',
-          message: h('i', { style: 'color: #F56C6C' }, '標題為必填欄位'),
+        this.$message({
+          message: '標題為必填欄位',
           type: 'error'
         })
       }
