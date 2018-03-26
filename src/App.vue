@@ -324,6 +324,14 @@ export default {
           type: 'info'
         })
       }
+      let tagsArray = []
+      for (let card of this.todoCards) {
+        for (let tag of card.tags) {
+          console.log(tag.text)
+          tagsArray.push(tag.text)
+        }
+      }
+      this.dynamicTags = _.uniq(tagsArray)
       card.tagsInputVisible = false
       this.inputValue = ''
     },
