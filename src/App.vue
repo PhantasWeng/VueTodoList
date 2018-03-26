@@ -1,7 +1,7 @@
 <template lang="pug">
   #app
     el-container
-      el-aside
+      el-aside(:class="{'menuOn': menuSwitch }")
         el-row.function-row
           el-col
             el-button-group
@@ -28,9 +28,14 @@
             el-col(:span="20")
               div(style="float: right;")
                 el-radio-group(v-model="statusFilter")
-                  el-radio-button(label="") 全部
-                  el-radio-button(label="false") 未完成
-                  el-radio-button(label="true") 已完成
+                  el-radio-button(label="") All
+                  el-radio-button(label="false")
+                    i.el-icon-close
+                  el-radio-button(label="true")
+                    i.el-icon-check
+                .menu-btn
+                  el-button.hidden-sm-and-up(v-if="menuSwitch === true", icon="el-icon-close", @click="menuSwitch = !menuSwitch") 選單
+                  el-button.hidden-sm-and-up(v-else, icon="el-icon-menu", @click="menuSwitch = !menuSwitch") 選單
         el-main
           //- router-view
           el-scrollbar
@@ -40,32 +45,31 @@
             //- </div>
             .todo-wrap
               .cards-wrap
-                span(v-for="(card, index) in todoCards", :key="index", v-if="String(card.status) === statusFilter || statusFilter === ''")
-                  el-card.box-card(v-if="tagsCondition(card)")
-                    .box-card__header(slot="header")
-                      el-row(type="flex", justify="space-between", style="margin-bottom: 8px;")
-                        el-col
-                          .box-card__title {{ card.title }}
-                        el-col(:span="12")
-                          el-tooltip(v-if="card.status === true", effect="dark", content="已完成" placement="top-start")
-                            .statusCheck-wrap(@click="card.status = !card.status")
-                              .statusCheck(:class="{checked: card.status === true}")
-                          el-tooltip(v-else, effect="light", content="未完成" placement="top-start")
-                            .statusCheck-wrap(@click="card.status = !card.status")
-                              .statusCheck(:class="{checked: card.status === true}")
-                          //- pre {{card.status}}
-                          el-button-group(style="float: right; margin-right: 8px;")
-                            el-button(size="mini", plain, @click="editCard(index)")
-                              i.el-icon-edit
-                            el-button(size="mini", plain, @click="deleteCard(index)")
-                              i.el-icon-delete
-                      el-row(type="flex", justify="space-between")
-                        el-col.box-card__tag
-                          el-tag(v-for="(tag, index) in card.tags", :key="index", size="medium", :type="tag.type", closable, :disable-transitions="false", @close="handleClose(tag, card.tags)") {{ tag.text }}
-                          el-input.input-new-tag(v-if="card.tagsInputVisible", v-model="inputValue", :ref="'saveTagInput' + index", size="mini", @keyup.enter.native="handleInputConfirm(card.tags, card)", @blur="handleInputConfirm(card.tags, card)")
-                          el-button.button-new-tag(v-else, size="small" @click="showInput(card, index)") + New Tag
-                    .box-card__content
-                      .content(v-html="compiledMarkdown(card.content)")
+                el-card.box-card(v-if="tagsCondition(card)", v-for="(card, index) in todoCards", :key="index")
+                  .box-card__header(slot="header")
+                    el-row(style="margin-bottom: 8px;")
+                      el-col(:span="18", :xs="{span: 24}")
+                        .box-card__title {{ card.title }}
+                      el-col(:span="6", :xs="{span: 24}")
+                        el-tooltip(v-if="card.status === true", effect="dark", content="已完成" placement="top-start")
+                          .statusCheck-wrap(@click="card.status = !card.status")
+                            .statusCheck(:class="{checked: card.status === true}")
+                        el-tooltip(v-else, effect="light", content="未完成" placement="top-start")
+                          .statusCheck-wrap(@click="card.status = !card.status")
+                            .statusCheck(:class="{checked: card.status === true}")
+                        //- pre {{card.status}}
+                        el-button-group(style="float: right; margin-right: 8px;")
+                          el-button(size="mini", plain, @click="editCard(index)")
+                            i.el-icon-edit
+                          el-button(size="mini", plain, @click="deleteCard(index)")
+                            i.el-icon-delete
+                    el-row(type="flex", justify="space-between")
+                      el-col.box-card__tag
+                        el-tag(v-for="(tag, index) in card.tags", :key="index", size="medium", :type="tag.type", closable, :disable-transitions="false", @close="handleClose(tag, card.tags)") {{ tag.text }}
+                        el-input.input-new-tag(v-show="card.tagsInputVisible", v-model="inputValue", :ref="'saveTagInput' + index", size="mini", @keyup.enter.native="handleInputConfirm(card.tags, card)", @blur="handleInputConfirm(card.tags, card)")
+                        el-button.button-new-tag(v-show="!card.tagsInputVisible", size="small", icon="el-icon-plus", @click="showInput(card, index)") {{index}}
+                  .box-card__content
+                    .content(v-html="compiledMarkdown(card.content)")
           el-dialog(title='新增 Todo', :visible.sync='dialogFormVisible')
             el-form
               el-form-item(label='title')
@@ -107,6 +111,7 @@ export default {
       inputVisible: false,
       inputValue: '',
       status: '',
+      menuSwitch: '',
       dialogFormVisible: false,
       editFormVisible: false,
       thisTodoForm: {
@@ -225,10 +230,10 @@ export default {
         let newTodoList = []
         for (let card of this.todoCards) {
           if (card.status === false) {
-            let index = this.todoCards.indexOf(card)
-            console.log(index)
+            // let index = this.todoCards.indexOf(card)
+            // console.log(index)
             newTodoList.push(card)
-            console.log(newTodoList)
+            // console.log(newTodoList)
           }
         }
         this.todoCards = newTodoList
@@ -260,7 +265,11 @@ export default {
         this.dialogFormVisible = false
         this.todoCards.push({
           title: this.addTodoForm.title,
-          content: this.addTodoForm.content
+          content: this.addTodoForm.content,
+          status: false,
+          visible: true,
+          tagsInputVisible: false,
+          tags: []
         })
         // console.log(this.todoCards)
         const h = this.$createElement
@@ -309,9 +318,10 @@ export default {
     },
 
     showInput (card, index) {
+      console.log(card, index)
       card.tagsInputVisible = true
-      this.$nextTick(_ => {
-        // console.log(this.$refs['saveTagInput' + index][0].$refs)
+      this.$nextTick(() => {
+        // console.log(this.$refs['saveTagInput' + index][0].$refs.input)
         this.$refs['saveTagInput' + index][0].$refs.input.focus()
       })
     },
@@ -327,7 +337,7 @@ export default {
       let tagsArray = []
       for (let card of this.todoCards) {
         for (let tag of card.tags) {
-          console.log(tag.text)
+          // console.log(tag.text)
           tagsArray.push(tag.text)
         }
       }
@@ -345,16 +355,15 @@ export default {
       this.tagsFilter = tag
     },
     tagsCondition (card) {
-      // if (card.tags.includes(this.tagsFilter)) {
-      //   return card.tags.includes(this.tagsFilter)
-      // }
-      if (this.tagsFilter !== '') {
-        if (_.findKey(card.tags, ['text', this.tagsFilter]) > -1) {
+      if (String(card.status) === this.statusFilter || this.statusFilter === '') {
+        if (this.tagsFilter !== '') {
+          if (_.findKey(card.tags, ['text', this.tagsFilter]) > -1) {
+            return true
+          }
+          return false
+        } else if (this.tagsFilter === '') {
           return true
         }
-        return false
-      } else if (this.tagsFilter === '') {
-        return true
       }
     }
   },
@@ -386,15 +395,23 @@ export default {
 // @import '~stylesheets/_bootstrap-variables.scss'
 // @import '~bootstrap/scss/bootstrap.scss'
 @import 'normalize.css/normalize.css'
+@import 'element-ui/lib/theme-chalk/display.css'
 
 body
   overflow: hidden
 #app
   .el-aside
+    position: relative
     // background-color: #F2F6FC
     width: 200px !important
     @media screen and (max-width: 1000px)
       width: 0px !important
+      &.menuOn
+        position: fixed
+        width: 200px !important
+        height: 100vh
+        z-index: 999
+        background-color: #fff
   .el-menu
     // background-color: #F2F6FC
     border: none
@@ -443,6 +460,7 @@ body
   &__title
     font-size: 20px
     font-weight: bold
+    margin-bottom: 8px
 
 .statusCheck-wrap
   cursor: pointer
@@ -482,4 +500,11 @@ body
 
 .clearfix:after
   clear: both
+
+.menu-btn
+  display: inline-block
+  margin-left: 8px
+
+.box-card__tag
+  // margin-top: 8px
 </style>
