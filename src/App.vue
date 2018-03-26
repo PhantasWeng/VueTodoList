@@ -14,9 +14,9 @@
               span 標籤
             el-menu-item-group
               //- template(slot="title") 類型
-              el-menu-item(@click="tagsFiltering('')")
+              el-menu-item(@click="tagsFiltering('')", :index="'1-0'")
                 span 全部
-              el-menu-item(v-for="(tag, index) in dynamicTags", :key="index", :index="'1-' + index", @click="tagsFiltering(tag)")
+              el-menu-item(v-for="(tag, index) in dynamicTags", :key="index", :index="'1-' + String(index + 1)", @click="tagsFiltering(tag)")
                 span {{ tag }}
       el-container
         el-header
@@ -40,35 +40,32 @@
             //- </div>
             .todo-wrap
               .cards-wrap
-                span(v-for="(card, index) in todoCards", :key="index", )
-                  span(v-if="String(card.status) === statusFilter || statusFilter === ''")
-                    //- span
-                      pre {{ tagsCondition(card) }}
-                    el-card.box-card(v-if="tagsCondition(card)")
-                      .box-card__header(slot="header")
-                        el-row(type="flex", justify="space-between", style="margin-bottom: 8px;")
-                          el-col
-                            .box-card__title {{ card.title }}
-                          el-col(:span="12")
-                            el-tooltip(v-if="card.status === true", effect="dark", content="已完成" placement="top-start")
-                              .statusCheck-wrap(@click="card.status = !card.status")
-                                .statusCheck(:class="{checked: card.status === true}")
-                            el-tooltip(v-else, effect="light", content="未完成" placement="top-start")
-                              .statusCheck-wrap(@click="card.status = !card.status")
-                                .statusCheck(:class="{checked: card.status === true}")
-                            //- pre {{card.status}}
-                            el-button-group(style="float: right; margin-right: 8px;")
-                              el-button(size="mini", plain, @click="editCard(index)")
-                                i.el-icon-edit
-                              el-button(size="mini", plain, @click="deleteCard(index)")
-                                i.el-icon-delete
-                        el-row(type="flex", justify="space-between")
-                          el-col.box-card__tag
-                            el-tag(v-for="(tag, index) in card.tags", :key="index", size="medium", :type="tag.type", closable, :disable-transitions="false", @close="handleClose(tag, card.tags)") {{ tag.text }}
-                            el-input.input-new-tag(v-if="card.tagsInputVisible", v-model="inputValue", :ref="'saveTagInput' + index", size="mini", @keyup.enter.native="handleInputConfirm(card.tags, card)", @blur="handleInputConfirm(card.tags, card)")
-                            el-button.button-new-tag(v-else, size="small" @click="showInput(card, index)") + New Tag
-                      .box-card__content
-                        .content(v-html="compiledMarkdown(card.content)")
+                span(v-for="(card, index) in todoCards", :key="index", v-if="String(card.status) === statusFilter || statusFilter === ''")
+                  el-card.box-card(v-if="tagsCondition(card)")
+                    .box-card__header(slot="header")
+                      el-row(type="flex", justify="space-between", style="margin-bottom: 8px;")
+                        el-col
+                          .box-card__title {{ card.title }}
+                        el-col(:span="12")
+                          el-tooltip(v-if="card.status === true", effect="dark", content="已完成" placement="top-start")
+                            .statusCheck-wrap(@click="card.status = !card.status")
+                              .statusCheck(:class="{checked: card.status === true}")
+                          el-tooltip(v-else, effect="light", content="未完成" placement="top-start")
+                            .statusCheck-wrap(@click="card.status = !card.status")
+                              .statusCheck(:class="{checked: card.status === true}")
+                          //- pre {{card.status}}
+                          el-button-group(style="float: right; margin-right: 8px;")
+                            el-button(size="mini", plain, @click="editCard(index)")
+                              i.el-icon-edit
+                            el-button(size="mini", plain, @click="deleteCard(index)")
+                              i.el-icon-delete
+                      el-row(type="flex", justify="space-between")
+                        el-col.box-card__tag
+                          el-tag(v-for="(tag, index) in card.tags", :key="index", size="medium", :type="tag.type", closable, :disable-transitions="false", @close="handleClose(tag, card.tags)") {{ tag.text }}
+                          el-input.input-new-tag(v-if="card.tagsInputVisible", v-model="inputValue", :ref="'saveTagInput' + index", size="mini", @keyup.enter.native="handleInputConfirm(card.tags, card)", @blur="handleInputConfirm(card.tags, card)")
+                          el-button.button-new-tag(v-else, size="small" @click="showInput(card, index)") + New Tag
+                    .box-card__content
+                      .content(v-html="compiledMarkdown(card.content)")
           el-dialog(title='新增 Todo', :visible.sync='dialogFormVisible')
             el-form
               el-form-item(label='title')
@@ -369,6 +366,9 @@ export default {
   watch: {
     statusFilter: function () {
       // console.log(this.statusFilter)
+    },
+    todoCards: function () {
+      console.log('變動')
     }
   }
 }
