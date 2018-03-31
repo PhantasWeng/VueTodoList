@@ -4,16 +4,25 @@
       el-aside(:class="{'menuOn': menuSwitch }")
         el-row.function-row
           el-col
-            el-button-group
-              el-button(type="primary", icon="el-icon-circle-plus", @click="addTodoButton")
-                span 新增 Todo
+            el-button(type="primary", icon="el-icon-circle-plus", @click="addTodoButton", style="width: 100%;")
+              span 新增 Todo
+        el-row
+          el-col
+            .user-card
+              .img-avatar-wrap
+                .img-avatar
+                  img(v-if="user.avatar", :src="user.avatar")
+                  img(v-else, src="https://api.fnkr.net/testimg/300x300/ddd/FFF/?text=AVATAR")
+                  .edit-avatar(@click="addPicture")
+                    i.el-icon.el-icon-picture-outline
+                    span 更新圖片
+              .userName {{ user.name }}
         el-menu(:default-openeds="['1']", :collapse="false")
           el-submenu(index="1")
             template(slot="title")
               i.el-icon-menu
               span 標籤
             el-menu-item-group
-              //- template(slot="title") 類型
               el-menu-item(@click="tagsFiltering('')", :index="'1-0'")
                 span 全部
               el-menu-item(v-for="(tag, index) in dynamicTags", :key="index", :index="'1-' + String(index + 1)", @click="tagsFiltering(tag)")
@@ -24,7 +33,6 @@
             el-col(:span="4")
               el-tooltip(effect="dark", content="清除已完成" placement="top-start")
                 el-button(type="danger", icon="el-icon-delete", @click="clearTodo")
-                  //- span 清除已完成
             el-col(:span="20")
               div(style="float: right;")
                 el-radio-group(v-model="statusFilter")
@@ -39,10 +47,6 @@
         el-main
           //- router-view
           el-scrollbar
-            //- <div id="editor">
-            //-   <textarea :value="input" @input="update"></textarea>
-            //-   <div v-html="compiledMarkdown"></div>
-            //- </div>
             .todo-wrap
               .cards-wrap
                 el-card.box-card(v-if="tagsCondition(card)", v-for="(card, index) in todoCards", :key="index")
@@ -57,7 +61,6 @@
                         el-tooltip(v-else, effect="light", content="未完成" placement="top-start")
                           .statusCheck-wrap(@click="card.status = !card.status")
                             .statusCheck(:class="{checked: card.status === true}")
-                        //- pre {{card.status}}
                         el-button-group(style="float: right; margin-right: 8px;")
                           el-button(size="mini", plain, @click="editCard(index)")
                             i.el-icon-edit
@@ -70,40 +73,70 @@
                         el-button.button-new-tag(v-show="!card.tagsInputVisible", size="small", icon="el-icon-plus", @click="showInput(card, index)") {{index}}
                   .box-card__content
                     .content(v-html="compiledMarkdown(card.content)")
-          el-dialog(title='新增 Todo', :visible.sync='dialogFormVisible')
+          el-dialog(title='新增 Todo', :center="true", :fullscreen="true", :visible.sync='dialogFormVisible')
             el-form
-              el-form-item(label='title')
+              el-form-item(label='標題')
                 el-input(v-model='addTodoForm.title', auto-complete='off')
-              el-form-item(label='content')
+              el-form-item(label='內容')
                 el-input(type='textarea', :rows='4', v-model='addTodoForm.content')
                 small Markdown 格式：
                  a(target="_blankh", href="https://wastemobile.gitbooks.io/gitbook-chinese/content/format/markdown.html") 編輯說明
             span.dialog-footer(slot='footer')
               el-button(@click='dialogFormVisible = false') 取消
               el-button(type='primary', @click='pushNewTodo') 建立
-          el-dialog(title='編輯內容', :visible.sync='editFormVisible')
+          el-dialog(title='編輯 Todo', :center="true", :fullscreen="true", :visible.sync='editFormVisible')
             el-form
-              el-form-item(label='title')
+              el-form-item(label='標題')
                 el-input(v-model='thisTodoForm.title', auto-complete='off')
-              el-form-item(label='content')
+              el-form-item(label='內容')
                 el-input(type='textarea', :rows='4', v-model='thisTodoForm.content')
                 small Markdown 格式：
                  a(target="_blankh", href="https://wastemobile.gitbooks.io/gitbook-chinese/content/format/markdown.html") 編輯說明
             span.dialog-footer(slot='footer')
               el-button(@click='editFormVisible = false') 取消
               el-button(type='primary', @click='updateTodo(thisTodoForm.index)') 更新
+          el-dialog#addPicture(title='使用者設定', :center="true", :fullscreen="true", :visible.sync='dialogUploadVisible', ref="avatarUpdate")
+            .cards-wrap
+              el-row
+                el-col(:span="24")
+                  el-form
+                    el-form-item(label="姓名")
+                      el-input(type='text', v-model='user.name')
+                    form(enctype="multipart/form-data")
+                      el-form-item(label="圖片網址")
+                        el-input(placeholder="輸入網址", @change="urlGetFile($event)")
+                          template(slot="prepend") Http://
+                      el-form-item(label="從本機上傳")
+                        label(for="fileUploadBtn")
+                          .fileUploadBtn
+                            i.el-icon.el-icon-upload
+                            span 選擇檔案
+                        input#fileUploadBtn(type="file", @change="fileUploadChange($event)")
+                  #cropperWrap
+                    img#cropperTarget(:src="base64Img", style="max-width: 100%; height: auto;")
+                    #resultDom
+              span.dialog-footer(slot='footer')
+                el-button(type="primary", style="margin-top: 16px;", @click="getCroppedCanvas()") 更新資訊
+
 </template>
 
 <script>
 import dateFns from 'date-fns'
 import _ from 'lodash'
 import marked from 'marked'
+import Cropper from 'cropperjs'
 
 export default {
   name: 'App',
   data () {
     return {
-      input: '# hello',
+      input: '',
+      user: {
+        avatar: '',
+        name: 'Phantas Weng'
+      },
+      upLoadimageUrl: '',
+      base64Img: '',
       test: '',
       testArray: [],
       currentDate: dateFns.format(new Date(), 'YYYY/MM/DD mm:ss'),
@@ -114,6 +147,7 @@ export default {
       menuSwitch: '',
       dialogFormVisible: false,
       editFormVisible: false,
+      dialogUploadVisible: false,
       thisTodoForm: {
         index: '',
         title: '',
@@ -218,6 +252,111 @@ export default {
     }
   },
   methods: {
+    fileUploadChange ($event) {
+      let file = $event.target.files[0]
+      console.log('fileList:', file)
+      this.loadImgFile(file)
+    },
+    addSticker (stickerUrl) {
+      var resultCanvas = document.getElementById('resultCanvas')
+      var sticker = new Image()
+      sticker.src = stickerUrl
+      sticker.onload = function () {
+        var ctx = resultCanvas.getContext('2d')
+        ctx.drawImage(sticker, 100, 100, 180, 180)
+      }
+    },
+    getCroppedCanvas () {
+      var resultDom = document.getElementById('resultDom')
+      var result = this.cropper.getCroppedCanvas()
+      if (result) {
+        result.setAttribute('id', 'resultCanvas')
+        if (document.getElementById('resultCanvas')) {
+          resultDom.innerHtml = result
+        } else {
+          resultDom.appendChild(result)
+        }
+        // this.addSticker('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/280px-PNG_transparency_demonstration_1.png')
+        // this.dialogUploadVisible = false
+        this.cropper.reset()
+        // this.$refs.avatarUpdate.close()
+      } else {
+        this.$message({
+          type: 'error',
+          message: '請先選擇圖片'
+        })
+      }
+    },
+    consoleLog (target) {
+      console.log(target)
+    },
+    urlGetFile ($event) {
+      // https://randomuser.me/api/portraits/women/1.jpg
+      // console.log('imageUrl:', $event.target.value)
+      var image = new Image()
+      var canvas = document.createElement('canvas')
+      var context = canvas.getContext('2d')
+
+      canvas.setAttribute('id', 'testCanvas')
+      // image.setAttribute('crossOrigin', 'Anonymous')
+      image.crossOrigin = 'Anonymous'
+
+      image.src = 'http://' + $event.replace(/(^\w+:|^)\/\//, '')
+      // image.src = $event.target.value
+      image.onload = () => {
+        canvas.width = image.width
+        canvas.height = image.height
+        context.drawImage(image, 0, 0)
+        // document.getElementById('cropperWrap').appendChild(canvas)
+        document.getElementById('cropperWrap').appendChild(canvas)
+        this.base64Img = canvas.toDataURL('image/jpeg')
+      }
+      image.onerror = function () {
+        // alert('CORS 被阻擋')
+        image.src = 'https://api.fnkr.net/testimg/300x300/ddd/888/?text=ERROR'
+      }
+    },
+    loadImgFile (file) {
+      var reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => {
+        this.base64Img = reader.result
+        // console.log(reader.result)
+      }
+    },
+    updateCropper () {
+      this.cropper.replace(this.base64Img)
+      console.log('Cropper update:', this.cropper)
+    },
+    initCropper () {
+      if (document.getElementById('cropperWrap') != null) {
+        // cropperJs
+        var image = document.getElementById('cropperTarget')
+        console.log('image', image)
+        this.cropper = new Cropper(image, {
+          aspectRatio: 1,
+          // minCropBoxWidth: 300,
+          viewMode: 2,
+          // dragMode: 'move',
+          // cropBoxMovable: false,
+          background: false,
+          zoomable: true,
+          crop: function (event) {
+            console.log('cropEvent:', event)
+          }
+        })
+        console.log('Cropper init:', this.cropper)
+      }
+    },
+    addPicture () {
+      // alert('addPicture')
+      this.dialogUploadVisible = true
+      this.$nextTick(function () {
+        if (!this.cropper) {
+          this.initCropper()
+        }
+      })
+    },
     addTodoButton () {
       this.dialogFormVisible = true
     },
@@ -310,7 +449,7 @@ export default {
       let tagsArray = []
       for (let card of this.todoCards) {
         for (let tag of card.tags) {
-          console.log(tag.text)
+          // console.log(tag.text)
           tagsArray.push(tag.text)
         }
       }
@@ -318,7 +457,7 @@ export default {
     },
 
     showInput (card, index) {
-      console.log(card, index)
+      // console.log(card, index)
       card.tagsInputVisible = true
       this.$nextTick(() => {
         // console.log(this.$refs['saveTagInput' + index][0].$refs.input)
@@ -378,7 +517,9 @@ export default {
       }
     }
     this.dynamicTags = _.uniq(tagsArray)
-    // this.dynamicTags
+    // this.$nextTick(function () {
+    //   this.initCropper()
+    // })
   },
   watch: {
     statusFilter: function () {
@@ -386,7 +527,14 @@ export default {
     },
     todoCards: function () {
       console.log('變動')
+    },
+    base64Img: function () {
+      console.log('base64Updated')
+      this.updateCropper()
     }
+  },
+  updated () {
+    // this.initCropper()
   }
 }
 </script>
@@ -396,12 +544,14 @@ export default {
 // @import '~bootstrap/scss/bootstrap.scss'
 @import 'normalize.css/normalize.css'
 @import 'element-ui/lib/theme-chalk/display.css'
+@import 'cropperjs/dist/cropper.css'
 
 body
   overflow: hidden
 #app
   .el-aside
     position: relative
+    box-shadow: 0 2px 12px 0 rgba(0,0,0,.1)
     // background-color: #F2F6FC
     width: 200px !important
     @media screen and (max-width: 1000px)
@@ -507,4 +657,63 @@ body
 
 .box-card__tag
   // margin-top: 8px
+
+#testCanvas
+  display: none
+
+#cropperWrap
+  width: 300px
+  height: 300px
+  border: 1px solid #ddd
+  margin: 8px
+
+.fileUploadBtn
+  background-color: #409EFF
+  color: #fff
+  display: inline-block
+  padding: 4px 16px
+  border-radius: 6px
+  cursor: pointer
+  font-size: 16px
+  .el-icon
+    font-size: 20px
+    margin-right: 8px
+  &:hover
+    background-color: rgba(#409EFF, 0.8)
+
+#fileUploadBtn
+  visibility: hidden
+
+.user-card
+  border-bottom: 1px solid #ddd
+  padding-bottom: 16px
+  margin-bottom: 16px
+  .img-avatar-wrap
+    padding: 16px 16px 0 16px
+  .img-avatar
+    position: relative
+    border-radius: 8px
+    overflow: hidden
+    position: relative
+    box-shadow: 0 2px 12px 0 rgba(0,0,0,.3)
+    img
+      width: 100%
+      display: block
+    .edit-avatar
+      position: absolute
+      bottom: 0
+      width: 100%
+      text-align: center
+      background-color: rgba(black, .3)
+      color: #fff
+      cursor: pointer
+      padding: 8px 0
+      i.el-icon
+        margin-right: 8px
+  .userName
+    font-weight: bold
+    text-align: center
+    font-size: 18px
+    padding: 14px 14px 8px 14px
+    color: #888
 </style>
