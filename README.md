@@ -1,11 +1,17 @@
 # vue-todo-list
 
-> A Vue.js project
+1. 新增 Todo
+2. 刪除 Todo
+3. 用狀態過濾 Todo
+4. 編輯 Todo Tags
+5. 清除已完成 Todo Card
+6. 用 Tag 過濾 Todo
+7. 上傳個人照片 (可加入相框)
 
 ## Build Setup
 
 ``` bash
-# install dependencies
+# 安裝 npm 套件
 npm install
 
 # serve with hot reload at localhost:8080
@@ -14,17 +20,10 @@ npm run dev
 # build for production with minification
 npm run build
 
-# build for production and view the bundle analyzer report
-npm run build --report
+# e2e 測試
+npx cypress open
 
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+# cypress 測試
+請選擇 todoList.js 文件

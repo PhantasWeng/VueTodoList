@@ -83,7 +83,7 @@
                  a(target="_blankh", href="https://wastemobile.gitbooks.io/gitbook-chinese/content/format/markdown.html") 編輯說明
             span.dialog-footer(slot='footer')
               el-button(@click='dialogFormVisible = false') 取消
-              el-button(type='primary', @click='pushNewTodo') 建立
+              el-button#pushNewTodo(type='primary', @click='pushNewTodo') 建立
           el-dialog(title='編輯 Todo', :center="true", :fullscreen="true", :visible.sync='editFormVisible')
             el-form
               el-form-item(label='標題')
