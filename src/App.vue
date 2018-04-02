@@ -289,7 +289,7 @@ export default {
       if (result) {
         result.setAttribute('id', 'resultCanvas')
         if (document.getElementById('resultCanvas')) {
-          var resultCanvas =  document.getElementById('resultCanvas')
+          var resultCanvas = document.getElementById('resultCanvas')
           resultDom.replaceChild(result, resultCanvas)
         } else {
           resultDom.appendChild(result)
