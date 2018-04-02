@@ -13,7 +13,7 @@
                 .img-avatar
                   img(v-if="user.avatar", :src="user.avatar")
                   img(v-else, src="https://api.fnkr.net/testimg/300x300/ddd/FFF/?text=AVATAR")
-                  .edit-avatar(@click="addPicture")
+                  .edit-avatar(@click="updatePicture")
                     i.el-icon.el-icon-picture-outline
                     span 更新圖片
               .userName {{ user.name }}
@@ -95,7 +95,7 @@
             span.dialog-footer(slot='footer')
               el-button(@click='editFormVisible = false') 取消
               el-button(type='primary', @click='updateTodo(thisTodoForm.index)') 更新
-          el-dialog#addPicture(title='使用者設定', :center="true", :fullscreen="true", :visible.sync='dialogUploadVisible', ref="avatarUpdate")
+          el-dialog(title='使用者設定', :center="true", :fullscreen="true", :visible.sync='dialogUploadVisible', ref="avatarUpdate")
             .cards-wrap
               el-row
                 el-col(:span="24")
@@ -112,9 +112,13 @@
                             i.el-icon.el-icon-upload
                             span 選擇檔案
                         input#fileUploadBtn(type="file", @change="fileUploadChange($event)")
+                  .selectFrame
+                    img.frameSelect(v-for="(option, index) in frameOptions", :src='option', @click="selectedFrame(option)", :class="{selected: option === selectedFrameUrl}")
+                    //- img.frameSelect(src='http://www.pngmart.com/files/5/Square-Frame-PNG-Photos.png', @click="selectedFrame($event)")
+                    //- img.frameSelect(src='https://www.freeiconspng.com/uploads/square-picture-frame-png-4.png', @click="selectedFrame($event)")
                   #cropperWrap
                     img#cropperTarget(:src="base64Img", style="max-width: 100%; height: auto;")
-                    #resultDom
+                  #resultDom
               span.dialog-footer(slot='footer')
                 el-button(type="primary", style="margin-top: 16px;", @click="getCroppedCanvas()") 更新資訊
 
@@ -135,6 +139,11 @@ export default {
         avatar: '',
         name: 'Phantas Weng'
       },
+      selectedFrameUrl: '',
+      frameOptions: [
+        'https://i.imgur.com/Ta4AY9i.png',
+        'https://i.imgur.com/vUmQSgM.png'
+      ],
       upLoadimageUrl: '',
       base64Img: '',
       test: '',
@@ -257,29 +266,41 @@ export default {
       console.log('fileList:', file)
       this.loadImgFile(file)
     },
+    selectedFrame (optionUrl) {
+      this.selectedFrameUrl = optionUrl
+    },
     addSticker (stickerUrl) {
       var resultCanvas = document.getElementById('resultCanvas')
       var sticker = new Image()
+      var that = this
+      let w = resultCanvas.width
+      let h = resultCanvas.height
+      sticker.setAttribute('crossOrigin', 'anonymous')
       sticker.src = stickerUrl
       sticker.onload = function () {
         var ctx = resultCanvas.getContext('2d')
-        ctx.drawImage(sticker, 100, 100, 180, 180)
+        ctx.drawImage(sticker, 0, 0, w, h)
+        that.user.avatar = document.getElementById('resultCanvas').toDataURL('image/jpeg')
       }
     },
     getCroppedCanvas () {
       var resultDom = document.getElementById('resultDom')
       var result = this.cropper.getCroppedCanvas()
+      result.setAttribute('id', 'resultCanvas')
       if (result) {
-        result.setAttribute('id', 'resultCanvas')
         if (document.getElementById('resultCanvas')) {
-          resultDom.innerHtml = result
+          var resultCanvas =  document.getElementById('resultCanvas')
+          resultDom.replaceChild(result, resultCanvas)
         } else {
           resultDom.appendChild(result)
         }
-        // this.addSticker('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/280px-PNG_transparency_demonstration_1.png')
-        // this.dialogUploadVisible = false
+        if (this.selectedFrameUrl !== '') {
+          this.addSticker(this.selectedFrameUrl)
+        } else {
+          this.user.avatar = document.getElementById('resultCanvas').toDataURL('image/jpeg')
+        }
+        this.dialogUploadVisible = false
         this.cropper.reset()
-        // this.$refs.avatarUpdate.close()
       } else {
         this.$message({
           type: 'error',
@@ -298,9 +319,7 @@ export default {
       var context = canvas.getContext('2d')
 
       canvas.setAttribute('id', 'testCanvas')
-      // image.setAttribute('crossOrigin', 'Anonymous')
-      image.crossOrigin = 'Anonymous'
-
+      image.setAttribute('crossOrigin', 'Anonymous')
       image.src = 'http://' + $event.replace(/(^\w+:|^)\/\//, '')
       // image.src = $event.target.value
       image.onload = () => {
@@ -348,8 +367,8 @@ export default {
         console.log('Cropper init:', this.cropper)
       }
     },
-    addPicture () {
-      // alert('addPicture')
+    updatePicture () {
+      // alert('updatePicture')
       this.dialogUploadVisible = true
       this.$nextTick(function () {
         if (!this.cropper) {
@@ -716,4 +735,22 @@ body
     font-size: 18px
     padding: 14px 14px 8px 14px
     color: #888
+
+#resultDom
+  display: none
+
+#resultDom, #resultCanvas
+  width: 200px
+  height: 200px
+
+.frameSelect
+  width: 100px
+  height: 100px
+  margin-right: 16px
+  opacity: 0.5
+  transition: all .3s ease
+  &:hover
+    opacity: 1
+  &.selected
+    opacity: 1
 </style>
