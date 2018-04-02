@@ -286,8 +286,8 @@ export default {
     getCroppedCanvas () {
       var resultDom = document.getElementById('resultDom')
       var result = this.cropper.getCroppedCanvas()
-      result.setAttribute('id', 'resultCanvas')
       if (result) {
+        result.setAttribute('id', 'resultCanvas')
         if (document.getElementById('resultCanvas')) {
           var resultCanvas =  document.getElementById('resultCanvas')
           resultDom.replaceChild(result, resultCanvas)
@@ -301,6 +301,10 @@ export default {
         }
         this.dialogUploadVisible = false
         this.cropper.reset()
+        this.$message({
+          type: 'success',
+          message: '個人資料更新成功'
+        })
       } else {
         this.$message({
           type: 'error',
